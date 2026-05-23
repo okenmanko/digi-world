@@ -1,181 +1,271 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
+import { useEffect, useState } from "react";
 import {
-  Moon,
+  Heart,
+  Menu,
+  Scale,
   Search,
   ShoppingCart,
-  Sun,
-  Menu,
   User,
-  Heart,
-  Scale,
-  Home,
+  X,
 } from "lucide-react";
 
 import { useApp } from "@/context/AppContext";
+import { getCart } from "@/lib/cart";
+import { getFavorites } from "@/lib/favorites";
+import { getCompare } from "@/lib/compare";
+import SearchOverlay from "@/components/SearchOverlay";
 
 export default function Navbar() {
-  const router = useRouter();
-
   const {
     lang,
     setLang,
     dark,
     setDark,
-    logged,
     cartCount,
     favoritesCount,
     compareCount,
+    logged,
   } = useApp();
 
-  const [search, setSearch] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  const input = dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white";
-  const header = dark ? "border-white/10 bg-[#050505]/90" : "border-black/10 bg-white/90";
-
-  const badge =
-    "absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-black text-white";
-
-  function submitSearch(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const query = search.trim();
-
-    if (!query) {
-      router.push("/catalog");
-      return;
+  useEffect(() => {
+    if (!cartCount) {
+      getCart();
     }
 
-    router.push(`/catalog?q=${encodeURIComponent(query)}`);
-  }
+    if (!favoritesCount) {
+      getFavorites();
+    }
+
+    if (!compareCount) {
+      getCompare();
+    }
+  }, []);
+
+  const theme = {
+    nav: dark
+      ? "border-white/10 bg-[#050505]/80 text-white"
+      : "border-black/10 bg-white/80 text-zinc-950",
+
+    soft: dark ? "text-zinc-400" : "text-zinc-600",
+
+    card: dark
+      ? "border-white/10 bg-white/[0.04]"
+      : "border-black/10 bg-white",
+
+    button: dark
+      ? "border-white/10 bg-white/5"
+      : "border-black/10 bg-white",
+  };
+
+  const navLinks = [
+    {
+      href: "/",
+      labelUz: "Bosh sahifa",
+      labelRu: "Главная",
+    },
+    {
+      href: "/catalog",
+      labelUz: "Katalog",
+      labelRu: "Каталог",
+    },
+    {
+      href: "/admin",
+      labelUz: "Admin",
+      labelRu: "Админ",
+    },
+  ];
 
   return (
     <>
-      <header className={`sticky top-0 z-50 h-[92px] border-b backdrop-blur-xl ${header}`}>
-        <div className="mx-auto flex h-full max-w-[1440px] items-center gap-4 px-5">
-          <Link href="/" className="flex h-[70px] w-[70px] items-center justify-center">
-            <Image
-              src="/logo.png"
-              alt="Digi World"
-              width={70}
-              height={70}
-              className="h-[70px] w-[70px] object-contain"
-              priority
-            />
-          </Link>
-
-          <Link
-            href="/catalog"
-            className="hidden items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-5 py-3 font-black text-white md:flex"
-          >
-            <Menu size={19} />
-            {lang === "uz" ? "Katalog" : "Каталог"}
-          </Link>
-
-          <form
-            onSubmit={submitSearch}
-            className={`hidden flex-1 items-center gap-3 rounded-2xl border px-4 py-3 lg:flex ${input}`}
-          >
-            <Search className="text-orange-500" size={20} />
-
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={lang === "uz" ? "Mahsulot qidirish..." : "Поиск товаров..."}
-              className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
-            />
-          </form>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Link href="/favorites" className={`relative hidden rounded-2xl border p-3 md:block ${input}`}>
-              <Heart size={20} />
-              {favoritesCount > 0 && <span className={badge}>{favoritesCount}</span>}
-            </Link>
-
-            <Link href="/compare" className={`relative hidden rounded-2xl border p-3 md:block ${input}`}>
-              <Scale size={20} />
-              {compareCount > 0 && <span className={badge}>{compareCount}</span>}
-            </Link>
-
-            <Link href="/cart" className={`relative rounded-2xl border p-3 ${input}`}>
-              <ShoppingCart size={20} />
-              {cartCount > 0 && <span className={badge}>{cartCount}</span>}
-            </Link>
-
-            <Link href={logged ? "/profile" : "/login"} className={`rounded-2xl border p-3 ${input}`}>
-              <User size={20} />
-            </Link>
-
-            <button onClick={() => setDark(!dark)} className={`rounded-2xl border p-3 ${input}`}>
-              {dark ? <Sun size={20} /> : <Moon size={20} />}
+      <header className="sticky top-0 z-50 px-4 pt-4">
+        <div
+          className={`mx-auto flex max-w-[1440px] items-center justify-between rounded-[28px] border px-5 py-4 backdrop-blur-xl ${theme.nav}`}
+        >
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border lg:hidden ${theme.button}`}
+            >
+              <Menu size={22} />
             </button>
 
-            <div className={`flex gap-1 rounded-2xl border p-1 ${input}`}>
-              {(["uz", "ru"] as const).map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setLang(item)}
-                  className={`rounded-xl px-3 py-2 text-xs font-black ${
-                    lang === item ? "bg-orange-500 text-white" : "opacity-60"
-                  }`}
+            <Link
+              href="/"
+              className="flex items-center gap-3"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 text-xl font-black text-white">
+                D
+              </div>
+
+              <div>
+                <div className="text-xl font-black">
+                  Digi World
+                </div>
+
+                <div className={`text-xs font-bold ${theme.soft}`}>
+                  Electronics Store
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          <nav className="hidden items-center gap-2 lg:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-2xl border px-5 py-3 font-black transition hover:border-orange-500 ${theme.button}`}
+              >
+                {lang === "uz"
+                  ? link.labelUz
+                  : link.labelRu}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${theme.button}`}
+            >
+              <Search size={20} />
+            </button>
+
+            <button
+              onClick={() =>
+                setLang(lang === "uz" ? "ru" : "uz")
+              }
+              className={`hidden rounded-2xl border px-4 py-3 font-black md:flex ${theme.button}`}
+            >
+              {lang === "uz" ? "RU" : "UZ"}
+            </button>
+
+            <button
+              onClick={() => setDark(!dark)}
+              className={`hidden rounded-2xl border px-4 py-3 font-black md:flex ${theme.button}`}
+            >
+              {dark ? "☀️" : "🌙"}
+            </button>
+
+            <Link
+              href="/favorites"
+              className={`relative flex h-12 w-12 items-center justify-center rounded-2xl border ${theme.button}`}
+            >
+              <Heart size={20} />
+
+              {favoritesCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-black text-white">
+                  {favoritesCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href="/compare"
+              className={`relative flex h-12 w-12 items-center justify-center rounded-2xl border ${theme.button}`}
+            >
+              <Scale size={20} />
+
+              {compareCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-black text-white">
+                  {compareCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href="/cart"
+              className={`relative flex h-12 w-12 items-center justify-center rounded-2xl border ${theme.button}`}
+            >
+              <ShoppingCart size={20} />
+
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-black text-white">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href={logged ? "/profile" : "/login"}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${theme.button}`}
+            >
+              <User size={20} />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm lg:hidden">
+          <div
+            className={`absolute left-0 top-0 h-full w-[320px] border-r p-5 ${theme.card}`}
+          >
+            <div className="mb-8 flex items-center justify-between">
+              <div className="text-2xl font-black">
+                Digi World
+              </div>
+
+              <button
+                onClick={() => setMobileOpen(false)}
+                className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${theme.button}`}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`rounded-2xl border px-5 py-4 text-lg font-black ${theme.button}`}
                 >
-                  {item.toUpperCase()}
-                </button>
+                  {lang === "uz"
+                    ? link.labelUz
+                    : link.labelRu}
+                </Link>
               ))}
+
+              <button
+                onClick={() =>
+                  setLang(lang === "uz" ? "ru" : "uz")
+                }
+                className={`rounded-2xl border px-5 py-4 text-left text-lg font-black ${theme.button}`}
+              >
+                {lang === "uz"
+                  ? "Русский язык"
+                  : "O‘zbek tili"}
+              </button>
+
+              <button
+                onClick={() => setDark(!dark)}
+                className={`rounded-2xl border px-5 py-4 text-left text-lg font-black ${theme.button}`}
+              >
+                {dark
+                  ? lang === "uz"
+                    ? "Yorug‘ tema"
+                    : "Светлая тема"
+                  : lang === "uz"
+                  ? "Qorong‘i tema"
+                  : "Тёмная тема"}
+              </button>
             </div>
           </div>
         </div>
+      )}
 
-        <form onSubmit={submitSearch} className="mx-auto block max-w-[1440px] px-5 pb-4 lg:hidden">
-          <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${input}`}>
-            <Search className="text-orange-500" size={20} />
-
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={lang === "uz" ? "Mahsulot qidirish..." : "Поиск товаров..."}
-              className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
-            />
-          </div>
-        </form>
-      </header>
-
-      <nav className={`fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl md:hidden ${header}`}>
-        <div className="grid grid-cols-5 px-2 py-2">
-          <Link href="/" className="flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-xs font-black">
-            <Home size={20} />
-            {lang === "uz" ? "Bosh" : "Главная"}
-          </Link>
-
-          <Link href="/catalog" className="flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-xs font-black">
-            <Menu size={20} />
-            {lang === "uz" ? "Katalog" : "Каталог"}
-          </Link>
-
-          <Link href="/favorites" className="relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-xs font-black">
-            <Heart size={20} />
-            {favoritesCount > 0 && <span className={badge}>{favoritesCount}</span>}
-            {lang === "uz" ? "Like" : "Избр."}
-          </Link>
-
-          <Link href="/compare" className="relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-xs font-black">
-            <Scale size={20} />
-            {compareCount > 0 && <span className={badge}>{compareCount}</span>}
-            {lang === "uz" ? "Compare" : "Сравн."}
-          </Link>
-
-          <Link href="/cart" className="relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-xs font-black">
-            <ShoppingCart size={20} />
-            {cartCount > 0 && <span className={badge}>{cartCount}</span>}
-            {lang === "uz" ? "Savat" : "Корз."}
-          </Link>
-        </div>
-      </nav>
+      <SearchOverlay
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
     </>
   );
 }

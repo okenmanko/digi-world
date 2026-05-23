@@ -15,6 +15,9 @@ import {
 
 import Navbar from "@/components/Navbar";
 import Toast from "@/components/Toast";
+import ProductBenefits from "@/components/ProductBenefits";
+import RelatedProducts from "@/components/RelatedProducts";
+
 import { useApp } from "@/context/AppContext";
 import { addToCart } from "@/lib/cart";
 import { toggleFavorite, isFavorite } from "@/lib/favorites";
@@ -40,8 +43,10 @@ export default function ProductClient({ params }: Props) {
     refreshCompareCount,
   } = useApp();
 
+  const [allProducts, setAllProducts] = useState<MergedProduct[]>([]);
   const [product, setProduct] = useState<MergedProduct | null>(null);
   const [loading, setLoading] = useState(true);
+
   const [favorite, setFavorite] = useState(false);
   const [compare, setCompare] = useState(false);
   const [toast, setToast] = useState("");
@@ -49,8 +54,9 @@ export default function ProductClient({ params }: Props) {
   useEffect(() => {
     async function loadProduct() {
       const data = await getFullMergedProducts();
-      const found = data.find((p) => p.slug === slug) || null;
+      const found = data.find((item) => item.slug === slug) || null;
 
+      setAllProducts(data);
       setProduct(found);
 
       if (found) {
@@ -80,8 +86,11 @@ export default function ProductClient({ params }: Props) {
     return (
       <main className={`min-h-screen ${theme.page}`}>
         <Navbar />
+
         <div className="flex min-h-[70vh] items-center justify-center">
-          <div className="text-2xl font-black text-orange-500">Loading...</div>
+          <div className="text-2xl font-black text-orange-500">
+            Loading...
+          </div>
         </div>
       </main>
     );
@@ -125,12 +134,33 @@ export default function ProductClient({ params }: Props) {
   );
 
   const specs = [
-    { label: "Kategoriya", value: product.categoryUz },
     {
-      label: "Status",
-      value: product.inStock ? "Omborda bor" : "Omborda yo‘q",
+      label: lang === "uz" ? "Kategoriya" : "Категория",
+      value: lang === "uz" ? product.categoryUz : product.categoryRu,
+    },
+    {
+      label: lang === "uz" ? "Status" : "Статус",
+      value: product.inStock
+        ? lang === "uz"
+          ? "Omborda bor"
+          : "В наличии"
+        : lang === "uz"
+        ? "Omborda yo‘q"
+        : "Нет в наличии",
     },
   ];
+
+  const relatedProducts = allProducts
+    .filter((item) => {
+      if (!product) return false;
+
+      const sameCategory =
+        item.categoryUz === product.categoryUz ||
+        item.categoryRu === product.categoryRu;
+
+      return sameCategory && item.slug !== product.slug;
+    })
+    .slice(0, 4);
 
   return (
     <main className={`min-h-screen ${theme.page}`}>
@@ -260,13 +290,17 @@ export default function ProductClient({ params }: Props) {
           </div>
         </div>
 
+        <div className="mt-6">
+          <ProductBenefits />
+        </div>
+
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
           <div className={`rounded-[32px] border p-6 md:p-8 ${theme.card}`}>
             <h2 className="text-2xl font-black md:text-3xl">
               {lang === "uz" ? "Tavsif" : "Описание"}
             </h2>
 
-            <p className={`mt-5 text-lg font-medium leading-relaxed ${theme.soft}`}>
+            <p className={`mt-5 whitespace-pre-line text-lg font-medium leading-relaxed ${theme.soft}`}>
               {lang === "uz" ? product.descriptionUz : product.descriptionRu}
             </p>
           </div>
@@ -280,18 +314,20 @@ export default function ProductClient({ params }: Props) {
               {specs.map((spec) => (
                 <div
                   key={spec.label}
-                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${theme.input}`}
+                  className={`flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 ${theme.input}`}
                 >
                   <span className={`font-bold ${theme.soft}`}>
                     {spec.label}
                   </span>
 
-                  <span className="font-black">{spec.value}</span>
+                  <span className="text-right font-black">{spec.value}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
+
+        <RelatedProducts products={relatedProducts} />
       </section>
     </main>
   );

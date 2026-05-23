@@ -5,6 +5,10 @@ export async function createSupabaseOrder(order: {
   customer_phone: string;
   items: any[];
   total: number;
+  city?: string;
+  address?: string;
+  payment?: string;
+  comment?: string;
 }) {
   const { data, error } = await supabase
     .from("orders")

@@ -7,9 +7,11 @@ import {
   ArrowLeft,
   CreditCard,
   MapPin,
+  MessageSquare,
   Phone,
   ShoppingBag,
   Truck,
+  User,
 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
@@ -34,6 +36,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [comment, setComment] = useState("");
 
   const [delivery, setDelivery] = useState("courier");
   const [payment, setPayment] = useState("cash");
@@ -54,8 +57,8 @@ export default function CheckoutPage() {
     card: dark ? "border-white/10 bg-white/[0.04]" : "border-black/10 bg-white",
     input:
       dark
-        ? "border-white/10 bg-white/5 text-white"
-        : "border-black/10 bg-white text-zinc-950",
+        ? "border-white/10 bg-white/5 text-white placeholder:text-zinc-500"
+        : "border-black/10 bg-white text-zinc-950 placeholder:text-zinc-400",
     soft: dark ? "text-zinc-400" : "text-zinc-600",
   };
 
@@ -94,11 +97,11 @@ export default function CheckoutPage() {
   }
 
   async function submitOrder() {
-    if (!name || !phone || !address) {
+    if (!name || !phone || !city || !address) {
       alert(
         lang === "uz"
-          ? "Ism, telefon va manzilni to‘ldiring"
-          : "Заполните имя, телефон и адрес"
+          ? "Ism, telefon, shahar va manzilni to‘ldiring"
+          : "Заполните имя, телефон, город и адрес"
       );
       return;
     }
@@ -122,7 +125,7 @@ export default function CheckoutPage() {
       phone,
       city,
       address,
-      comment: "",
+      comment,
       delivery: deliveryLabel(),
       payment: paymentLabel(),
       items,
@@ -132,6 +135,10 @@ export default function CheckoutPage() {
     const supabaseOrder = await createSupabaseOrder({
       customer_name: name,
       customer_phone: phone,
+      city,
+      address,
+      payment: paymentLabel(),
+      comment,
       items,
       total,
     });
@@ -140,14 +147,13 @@ export default function CheckoutPage() {
       setLoading(false);
       alert(
         lang === "uz"
-          ? "Supabase order saqlamadi. RLS policy kerak bo‘lishi mumkin."
-          : "Supabase не сохранил заказ. Возможно нужна RLS policy."
+          ? "Buyurtma bazaga saqlanmadi. Supabase orders columnlarini tekshiring."
+          : "Заказ не сохранился. Проверьте columns в Supabase orders."
       );
       return;
     }
 
-    const realOrderId =
-      supabaseOrder.data?.[0]?.id || localOrder.id;
+    const realOrderId = supabaseOrder.data?.[0]?.id || localOrder.id;
 
     localStorage.setItem("digi_world_last_order_id", realOrderId);
 
@@ -176,19 +182,28 @@ export default function CheckoutPage() {
             <ShoppingBag className="text-orange-500" size={36} />
 
             <h1 className="text-4xl font-black md:text-6xl">
-              {lang === "uz" ? "Checkout" : "Оформление"}
+              {lang === "uz"
+                ? "Buyurtmani rasmiylashtirish"
+                : "Оформление заказа"}
             </h1>
           </div>
+
+          <p className={`mt-4 text-lg font-medium ${theme.soft}`}>
+            {lang === "uz"
+              ? "Ma’lumotlarni to‘ldiring, buyurtma admin panelga tushadi."
+              : "Заполните данные, заказ попадёт в админ панель."}
+          </p>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
           <div className="grid gap-6">
             <div className={`rounded-[32px] border p-6 ${theme.card}`}>
-              <h2 className="text-2xl font-black">
+              <h2 className="flex items-center gap-2 text-2xl font-black">
+                <User size={24} />
                 {lang === "uz" ? "Mijoz ma’lumotlari" : "Данные клиента"}
               </h2>
 
-              <div className="mt-5 grid gap-4">
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -234,7 +249,7 @@ export default function CheckoutPage() {
                       : theme.input
                   }`}
                 >
-                  {lang === "uz" ? "Kuryer" : "Курьер"}
+                  {lang === "uz" ? "Kuryer orqali" : "Курьером"}
                 </button>
 
                 <button
@@ -276,6 +291,25 @@ export default function CheckoutPage() {
                 ))}
               </div>
             </div>
+
+            <div className={`rounded-[32px] border p-6 ${theme.card}`}>
+              <h2 className="flex items-center gap-2 text-2xl font-black">
+                <MessageSquare size={24} />
+                {lang === "uz" ? "Izoh" : "Комментарий"}
+              </h2>
+
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={4}
+                placeholder={
+                  lang === "uz"
+                    ? "Qo‘shimcha izoh yozing..."
+                    : "Напишите дополнительный комментарий..."
+                }
+                className={`mt-5 w-full rounded-2xl border px-5 py-4 outline-none ${theme.input}`}
+              />
+            </div>
           </div>
 
           <aside className={`h-fit rounded-[32px] border p-6 ${theme.card}`}>
@@ -314,6 +348,24 @@ export default function CheckoutPage() {
                     </div>
                   ) : null
                 )}
+
+                <div className="h-px bg-orange-500/20" />
+
+                <div className="space-y-2 text-sm font-bold">
+                  <div className="flex justify-between gap-4">
+                    <span className={theme.soft}>
+                      {lang === "uz" ? "Yetkazish" : "Доставка"}
+                    </span>
+                    <span>{deliveryLabel()}</span>
+                  </div>
+
+                  <div className="flex justify-between gap-4">
+                    <span className={theme.soft}>
+                      {lang === "uz" ? "To‘lov" : "Оплата"}
+                    </span>
+                    <span>{paymentLabel()}</span>
+                  </div>
+                </div>
 
                 <div className="h-px bg-orange-500/20" />
 

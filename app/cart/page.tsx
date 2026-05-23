@@ -148,10 +148,10 @@ export default function CartPage() {
               </div>
 
               <Link
-                href="/checkout"
+                href="/Buyurtmani rasmiylashtirish"
                 className="mt-6 flex w-full justify-center rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-7 py-4 font-black text-white"
               >
-                {lang === "uz" ? "Checkout" : "Оформить"}
+                {lang === "uz" ? "Buyurtmani rasmiylashtirish" : "Оформить"}
               </Link>
 
               <button

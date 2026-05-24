@@ -1,66 +1,91 @@
-import { products } from "./products";
+import { products as staticProducts } from "./products";
 import { getSupabaseProducts } from "./supabaseProducts";
 
 export type MergedProduct = {
-  id: string | number;
-  slug: string;
+  id?: string;
   name: string;
-  categoryUz: string;
-  categoryRu: string;
+  slug: string;
   price: number;
-  oldPrice?: number;
-  emoji: string;
+  oldPrice?: number | null;
   image?: string;
-  shortUz: string;
-  shortRu: string;
-  descriptionUz: string;
-  descriptionRu: string;
-  inStock: boolean;
+  emoji?: string;
+  categoryUz?: string;
+  categoryRu?: string;
+  shortUz?: string;
+  shortRu?: string;
+  descriptionUz?: string;
+  descriptionRu?: string;
   rating: number;
+  inStock: boolean;
 };
-
-export function getLocalMergedProducts(): MergedProduct[] {
-  return products.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    categoryUz: p.categoryUz,
-    categoryRu: p.categoryRu,
-    price: p.price,
-    oldPrice: p.oldPrice,
-    emoji: p.emoji,
-    image: "",
-    shortUz: p.shortUz,
-    shortRu: p.shortRu,
-    descriptionUz: p.descriptionUz,
-    descriptionRu: p.descriptionRu,
-    inStock: p.inStock,
-    rating: p.rating,
-  }));
-}
 
 export async function getFullMergedProducts(): Promise<MergedProduct[]> {
   const supabaseProducts = await getSupabaseProducts();
 
-  const mappedSupabaseProducts: MergedProduct[] = supabaseProducts.map(
-    (p: any) => ({
-      id: p.id,
-      slug: p.slug,
-      name: p.name,
-      categoryUz: p.category,
-      categoryRu: p.category,
-      price: Number(p.price || 0),
-      oldPrice: undefined,
-      emoji: "📦",
-      image: p.image || "",
-      shortUz: p.description || "Supabase orqali qo‘shilgan mahsulot.",
-      shortRu: p.description || "Товар добавлен через Supabase.",
-      descriptionUz: p.description || "Supabase orqali qo‘shilgan mahsulot.",
-      descriptionRu: p.description || "Товар добавлен через Supabase.",
-      inStock: Boolean(p.stock),
-      rating: 5,
-    })
+  const mappedSupabaseProducts: MergedProduct[] = (supabaseProducts || []).map(
+    (p: any) => {
+      const price = Number(p.price || 0);
+      const oldPrice = p.old_price ? Number(p.old_price) : null;
+
+      return {
+        id: p.id,
+        name: p.name || "No name",
+        slug: p.slug,
+        price,
+        oldPrice,
+        image: p.image || "",
+        emoji: "📦",
+        categoryUz: p.category || "Boshqa",
+        categoryRu: p.category || "Другое",
+        shortUz:
+          p.short_uz ||
+          p.description ||
+          `${p.name || "Mahsulot"} — Digi World katalogidagi mahsulot.`,
+        shortRu:
+          p.short_ru ||
+          p.description_ru ||
+          `${p.name || "Товар"} — товар из каталога Digi World.`,
+        descriptionUz:
+          p.description_uz ||
+          p.description ||
+          `${p.name || "Mahsulot"} — Digi World katalogidagi mahsulot.`,
+        descriptionRu:
+          p.description_ru ||
+          p.description ||
+          `${p.name || "Товар"} — товар из каталога Digi World.`,
+        rating: Number(p.rating || 5),
+        inStock: p.stock !== false,
+      };
+    }
   );
 
-  return [...mappedSupabaseProducts, ...getLocalMergedProducts()];
+  const mappedStaticProducts: MergedProduct[] = staticProducts.map((p: any) => ({
+    id: p.id,
+    name: p.name || "No name",
+    slug: p.slug,
+    price: Number(p.price || 0),
+    oldPrice: p.oldPrice ? Number(p.oldPrice) : null,
+    image: p.image || "",
+    emoji: p.emoji || "📦",
+    categoryUz: p.categoryUz || p.category || "Boshqa",
+    categoryRu: p.categoryRu || p.category || "Другое",
+    shortUz: p.shortUz || p.descriptionUz || "",
+    shortRu: p.shortRu || p.descriptionRu || "",
+    descriptionUz: p.descriptionUz || p.description || "",
+    descriptionRu: p.descriptionRu || p.description || "",
+    rating: Number(p.rating || 5),
+    inStock: p.inStock !== false,
+  }));
+
+  const map = new Map<string, MergedProduct>();
+
+  for (const product of mappedStaticProducts) {
+    map.set(product.slug, product);
+  }
+
+  for (const product of mappedSupabaseProducts) {
+    map.set(product.slug, product);
+  }
+
+  return Array.from(map.values());
 }

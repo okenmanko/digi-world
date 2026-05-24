@@ -12,12 +12,10 @@ import { useApp } from "@/context/AppContext";
 import { addToCart, getCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/products";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
-
 import {
   getFullMergedProducts,
   type MergedProduct,
 } from "@/lib/mergedProducts";
-
 import {
   getSupabaseCategories,
   type Category,
@@ -28,11 +26,9 @@ export default function CatalogPage() {
 
   const [products, setProducts] = useState<MergedProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<CatalogSort>("default");
   const [category, setCategory] = useState("all");
-
   const [toast, setToast] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -49,19 +45,15 @@ export default function CatalogPage() {
   }, [refreshKey]);
 
   const categoryNames = useMemo(() => {
-    return categories.map((item) =>
-      lang === "uz" ? item.name_uz : item.name_ru
-    );
+    return categories.map((item) => (lang === "uz" ? item.name_uz : item.name_ru));
   }, [categories, lang]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
 
     let result = products.filter((p) => {
-      const productCategory = p.categoryUz || p.categoryRu || "";
-
-      const matchesCategory =
-        category === "all" || productCategory === category;
+      const productCategory = lang === "uz" ? p.categoryUz : p.categoryRu;
+      const matchesCategory = category === "all" || productCategory === category;
 
       const matchesSearch = [
         p.name,
@@ -79,24 +71,13 @@ export default function CatalogPage() {
       return matchesCategory && matchesSearch;
     });
 
-    if (sort === "newest") {
-      result = [...result].reverse();
-    }
-
-    if (sort === "cheap") {
-      result = [...result].sort((a, b) => a.price - b.price);
-    }
-
-    if (sort === "expensive") {
-      result = [...result].sort((a, b) => b.price - a.price);
-    }
-
-    if (sort === "stock") {
-      result = result.filter((p) => p.inStock);
-    }
+    if (sort === "newest") result = [...result].reverse();
+    if (sort === "cheap") result = [...result].sort((a, b) => a.price - b.price);
+    if (sort === "expensive") result = [...result].sort((a, b) => b.price - a.price);
+    if (sort === "stock") result = result.filter((p) => p.inStock);
 
     return result;
-  }, [products, query, sort, category]);
+  }, [products, query, sort, category, lang]);
 
   const theme = {
     page: dark ? "bg-[#050505] text-white" : "bg-[#f6f7fb] text-zinc-950",
@@ -121,7 +102,6 @@ export default function CatalogPage() {
     addToCart(slug);
     refreshCartCount();
     setRefreshKey((x) => x + 1);
-
     showToast(lang === "uz" ? "Savatga qo‘shildi" : "Добавлено в корзину");
   }
 
@@ -129,7 +109,6 @@ export default function CatalogPage() {
     toggleFavorite(slug);
     refreshFavoritesCount();
     setRefreshKey((x) => x + 1);
-
     showToast(lang === "uz" ? "Sevimlilar yangilandi" : "Избранное обновлено");
   }
 
@@ -148,17 +127,12 @@ export default function CatalogPage() {
             {lang === "uz" ? "Digi World mahsulotlari" : "Товары Digi World"}
           </p>
 
-          <div
-            className={`mt-6 flex items-center gap-3 rounded-2xl border px-5 py-4 ${theme.input}`}
-          >
+          <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-5 py-4 ${theme.input}`}>
             <Search className="text-orange-500" size={22} />
-
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                lang === "uz" ? "Mahsulot qidirish..." : "Поиск товара..."
-              }
+              placeholder={lang === "uz" ? "Mahsulot qidirish..." : "Поиск товара..."}
               className="w-full bg-transparent outline-none"
             />
           </div>
@@ -191,9 +165,7 @@ export default function CatalogPage() {
           </div>
 
           <div className={`mt-4 text-sm font-black ${theme.soft}`}>
-            {lang === "uz"
-              ? `${filtered.length} ta mahsulot`
-              : `${filtered.length} товаров`}
+            {lang === "uz" ? `${filtered.length} ta mahsulot` : `${filtered.length} товаров`}
           </div>
         </div>
 
@@ -208,11 +180,8 @@ export default function CatalogPage() {
         </div>
 
         {filtered.length === 0 ? (
-          <div
-            className={`mt-6 rounded-[30px] border p-10 text-center ${theme.card}`}
-          >
+          <div className={`mt-6 rounded-[30px] border p-10 text-center ${theme.card}`}>
             <Search className="mx-auto text-orange-500" size={48} />
-
             <h2 className="mt-5 text-2xl font-black">
               {lang === "uz" ? "Mahsulot topilmadi" : "Товар не найден"}
             </h2>
@@ -223,12 +192,29 @@ export default function CatalogPage() {
               const fav = isFavorite(product.slug);
               const added = isInCart(product.slug);
 
+              const hasDiscount =
+                product.oldPrice && product.oldPrice > product.price;
+
+              const discountPercent = hasDiscount
+                ? Math.round(
+                    ((Number(product.oldPrice) - product.price) /
+                      Number(product.oldPrice)) *
+                      100
+                  )
+                : 0;
+
               return (
                 <div
                   key={`${product.slug}-${refreshKey}`}
                   className={`rounded-[30px] border p-4 ${theme.card}`}
                 >
                   <div className="relative flex h-[240px] items-center justify-center overflow-hidden rounded-[24px] bg-white">
+                    {hasDiscount && (
+                      <div className="absolute left-3 top-3 rounded-full bg-green-500 px-3 py-2 text-xs font-black text-white">
+                        -{discountPercent}%
+                      </div>
+                    )}
+
                     {product.image ? (
                       <img
                         src={product.image}
@@ -277,29 +263,23 @@ export default function CatalogPage() {
                     </span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <div className="text-2xl font-black text-orange-500">
-                      {formatPrice(product.price)}
-                    </div>
+                  <div className="mt-4">
+                    {hasDiscount && (
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="text-lg font-black text-zinc-400 line-through">
+                          {formatPrice(product.oldPrice)}
+                        </span>
 
-                    {product.oldPrice && product.oldPrice > product.price && (
-                      <div className="text-sm font-bold text-zinc-400 line-through">
-                        {formatPrice(product.oldPrice)}
+                        <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-black text-green-600">
+                          -{discountPercent}%
+                        </span>
                       </div>
                     )}
-                  </div>
 
-                  {product.oldPrice && product.oldPrice > product.price && (
-                    <div className="mt-2 inline-flex rounded-full bg-green-500/10 px-3 py-1 text-xs font-black text-green-600">
-                      -
-                      {Math.round(
-                        ((product.oldPrice - product.price) /
-                          product.oldPrice) *
-                          100
-                      )}
-                      %
+                    <div className="text-3xl font-black text-orange-500">
+                      {formatPrice(product.price)}
                     </div>
-                  )}
+                  </div>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">
                     <button

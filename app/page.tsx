@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, Clock, ShieldCheck, Truck } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
+import MobileBottomNav from "@/components/MobileBottomNav";
+import Footer from "@/components/footer";
 
 export default function HomePage() {
   return (
@@ -117,6 +119,9 @@ export default function HomePage() {
           </div>
         </section>
       </section>
+      <Footer />
+      <MobileBottomNav />
     </main>
+    
   );
 }

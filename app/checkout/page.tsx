@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/footer";
+
 import { useApp } from "@/context/AppContext";
 
 import { clearCart, getCart } from "@/lib/cart";
@@ -572,6 +574,7 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </section>
+      <footer/>
     </main>
   );
 }

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/footer";
+
 import { useApp } from "@/context/AppContext";
 
 import {
@@ -226,6 +228,7 @@ export default function CartPage() {
           </aside>
         </div>
       </section>
+      <footer/>
     </main>
   );
 }

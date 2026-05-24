@@ -196,8 +196,14 @@ export const products: Product[] = [
   },
 ];
 
-export function formatPrice(price: number) {
-  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " so‘m";
+export function formatPrice(price?: number | null) {
+  if (!price) return "0 so‘m";
+
+  return (
+    price
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " so‘m"
+  );
 }
 
 export function getProductBySlug(slug: string) {

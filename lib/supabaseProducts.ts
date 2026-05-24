@@ -1,5 +1,16 @@
 import { supabase } from "./supabase";
 
+export type SupabaseProductPayload = {
+  name: string;
+  slug: string;
+  price: number;
+  old_price?: number | null;
+  image: string;
+  category: string;
+  description: string;
+  stock: boolean;
+};
+
 export async function getSupabaseProducts() {
   const { data, error } = await supabase
     .from("products")
@@ -14,18 +25,19 @@ export async function getSupabaseProducts() {
   return data || [];
 }
 
-export async function createSupabaseProduct(product: {
-  name: string;
-  slug: string;
-  price: number;
-  image: string;
-  category: string;
-  description: string;
-  stock: boolean;
-}) {
+export async function createSupabaseProduct(product: SupabaseProductPayload) {
   const { data, error } = await supabase
     .from("products")
-    .insert(product)
+    .insert({
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      old_price: product.old_price || null,
+      image: product.image,
+      category: product.category,
+      description: product.description,
+      stock: product.stock,
+    })
     .select();
 
   if (error) {
@@ -38,19 +50,20 @@ export async function createSupabaseProduct(product: {
 
 export async function updateSupabaseProduct(
   id: string,
-  product: {
-    name: string;
-    slug: string;
-    price: number;
-    image: string;
-    category: string;
-    description: string;
-    stock: boolean;
-  }
+  product: SupabaseProductPayload
 ) {
   const { data, error } = await supabase
     .from("products")
-    .update(product)
+    .update({
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      old_price: product.old_price || null,
+      image: product.image,
+      category: product.category,
+      description: product.description,
+      stock: product.stock,
+    })
     .eq("id", id)
     .select();
 
@@ -63,7 +76,10 @@ export async function updateSupabaseProduct(
 }
 
 export async function deleteSupabaseProduct(id: string) {
-  const { error } = await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     console.error(error);

@@ -2,11 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShoppingCart, Trash2 } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
 import { useApp } from "@/context/AppContext";
-import { clearCart, getCart, type CartItem } from "@/lib/cart";
+
+import {
+  clearCart,
+  decreaseCartItem,
+  getCart,
+  addToCart,
+  removeFromCart,
+  type CartItem,
+} from "@/lib/cart";
+
 import { formatPrice } from "@/lib/products";
 import {
   getFullMergedProducts,
@@ -14,7 +23,7 @@ import {
 } from "@/lib/mergedProducts";
 
 export default function CartPage() {
-  const { lang, dark, refreshCartCount } = useApp();
+  const { dark, lang, refreshCartCount } = useApp();
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<MergedProduct[]>([]);
@@ -29,10 +38,18 @@ export default function CartPage() {
     load();
   }, []);
 
+  function refresh() {
+    setCart(getCart());
+    refreshCartCount();
+  }
+
   const theme = {
     page: dark ? "bg-[#050505] text-white" : "bg-[#f6f7fb] text-zinc-950",
     card: dark ? "border-white/10 bg-white/[0.04]" : "border-black/10 bg-white",
-    input: dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white",
+    input:
+      dark
+        ? "border-white/10 bg-white/5 text-white"
+        : "border-black/10 bg-white text-zinc-950",
     soft: dark ? "text-zinc-400" : "text-zinc-600",
   };
 
@@ -53,117 +70,161 @@ export default function CartPage() {
     0
   );
 
-  function handleClear() {
-    clearCart();
-    setCart([]);
-    refreshCartCount();
-  }
-
   return (
     <main className={`min-h-screen ${theme.page}`}>
       <Navbar />
 
-      <section className="mx-auto max-w-[1440px] px-5 py-8">
+      <section className="mx-auto max-w-[1440px] px-5 py-7">
         <Link
           href="/catalog"
-          className="mb-6 inline-flex items-center gap-2 font-bold text-orange-500"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-black text-orange-500"
         >
-          <ArrowLeft size={18} />
-          {lang === "uz" ? "Katalogga qaytish" : "Назад в каталог"}
+          <ArrowLeft size={17} />
+          {lang === "uz" ? "Katalogga qaytish" : "Вернуться в каталог"}
         </Link>
 
-        <div className={`rounded-[36px] border p-6 md:p-8 ${theme.card}`}>
+        <div className={`rounded-[30px] border p-6 ${theme.card}`}>
           <h1 className="text-4xl font-black md:text-6xl">
             {lang === "uz" ? "Savat" : "Корзина"}
           </h1>
 
-          <p className={`mt-3 text-lg font-medium ${theme.soft}`}>
+          <p className={`mt-3 text-base font-medium ${theme.soft}`}>
             {lang === "uz"
               ? "Buyurtmangizni tekshiring."
               : "Проверьте ваш заказ."}
           </p>
         </div>
 
-        {cartItems.length === 0 ? (
-          <div className={`mt-6 rounded-[36px] border p-10 text-center ${theme.card}`}>
-            <ShoppingCart className="mx-auto text-orange-500" size={56} />
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_360px]">
+          <div className="grid gap-4">
+            {cartItems.length === 0 ? (
+              <div className={`rounded-[28px] border p-8 text-center ${theme.card}`}>
+                <ShoppingBag className="mx-auto text-orange-500" size={48} />
 
-            <h2 className="mt-5 text-2xl font-black">
-              {lang === "uz" ? "Savat hozircha bo‘sh" : "Корзина пока пустая"}
-            </h2>
+                <h2 className="mt-4 text-2xl font-black">
+                  {lang === "uz" ? "Savat bo‘sh" : "Корзина пустая"}
+                </h2>
 
-            <Link
-              href="/catalog"
-              className="mt-6 inline-flex rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-8 py-4 font-black text-white"
-            >
-              {lang === "uz" ? "Xaridni davom ettirish" : "Продолжить покупки"}
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
-            <div className="grid gap-4">
-              {cartItems.map((item) =>
+                <p className={`mt-2 text-sm ${theme.soft}`}>
+                  {lang === "uz" ? "Mahsulot qo‘shing." : "Добавьте товары."}
+                </p>
+
+                <Link
+                  href="/catalog"
+                  className="mt-5 inline-flex rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-6 py-3 font-black text-white"
+                >
+                  {lang === "uz" ? "Katalogga o‘tish" : "Перейти в каталог"}
+                </Link>
+              </div>
+            ) : (
+              cartItems.map((item) =>
                 item ? (
                   <div
                     key={item.slug}
                     className={`rounded-[28px] border p-5 ${theme.card}`}
                   >
-                    <div className="flex gap-5">
-                      <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl bg-white">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="h-28 w-28 object-contain"
-                          />
-                        ) : (
-                          <div className="text-5xl">{item.emoji}</div>
-                        )}
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-4xl">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-20 w-20 object-contain"
+                            />
+                          ) : (
+                            item.emoji || "📦"
+                          )}
+                        </div>
+
+                        <div>
+                          <h2 className="text-xl font-black">{item.name}</h2>
+
+                          <div className={`mt-1 text-sm ${theme.soft}`}>
+                            x{item.qty}
+                          </div>
+
+                          <div className="mt-3 text-3xl font-black text-orange-500">
+                            {formatPrice(item.price)}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex-1">
-                        <h2 className="text-xl font-black">{item.name}</h2>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => {
+                            decreaseCartItem(item.slug);
+                            refresh();
+                          }}
+                          className={`flex h-11 w-11 items-center justify-center rounded-xl border ${theme.input}`}
+                        >
+                          <Minus size={19} />
+                        </button>
 
-                        <p className={`mt-2 text-sm font-bold ${theme.soft}`}>
-                          x{item.qty}
-                        </p>
-
-                        <div className="mt-4 text-2xl font-black text-orange-500">
-                          {formatPrice(item.price * item.qty)}
+                        <div
+                          className={`flex h-11 min-w-[56px] items-center justify-center rounded-xl border px-4 text-lg font-black ${theme.input}`}
+                        >
+                          {item.qty}
                         </div>
+
+                        <button
+                          onClick={() => {
+                            addToCart(item.slug);
+                            refresh();
+                          }}
+                          className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-400 to-red-500 text-white"
+                        >
+                          <Plus size={19} />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            removeFromCart(item.slug);
+                            refresh();
+                          }}
+                          className="flex h-11 items-center gap-2 rounded-xl border border-red-500 px-4 text-sm font-black text-red-500"
+                        >
+                          <Trash2 size={18} />
+                          {lang === "uz" ? "O‘chirish" : "Удалить"}
+                        </button>
                       </div>
                     </div>
                   </div>
                 ) : null
-              )}
+              )
+            )}
+          </div>
+
+          <aside className={`h-fit rounded-[28px] border p-5 ${theme.card}`}>
+            <h2 className="text-3xl font-black">
+              {lang === "uz" ? "Jami" : "Итого"}
+            </h2>
+
+            <div className="mt-5 text-4xl font-black text-orange-500">
+              {formatPrice(total)}
             </div>
 
-            <aside className={`h-fit rounded-[32px] border p-6 ${theme.card}`}>
-              <h2 className="text-2xl font-black">
-                {lang === "uz" ? "Jami" : "Итого"}
-              </h2>
+            <Link
+              href="/checkout"
+              className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-5 py-4 text-base font-black text-white"
+            >
+              {lang === "uz"
+                ? "Buyurtmani rasmiylashtirish"
+                : "Оформить заказ"}
+            </Link>
 
-              <div className="mt-5 text-4xl font-black text-orange-500">
-                {formatPrice(total)}
-              </div>
-
-              <Link
-                href="/Buyurtmani rasmiylashtirish"
-                className="mt-6 flex w-full justify-center rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-7 py-4 font-black text-white"
-              >
-                {lang === "uz" ? "Buyurtmani rasmiylashtirish" : "Оформить"}
-              </Link>
-
-              <button
-                onClick={handleClear}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-500/20 px-7 py-4 font-black text-red-500"
-              >
-                <Trash2 size={18} />
-                {lang === "uz" ? "Savatni tozalash" : "Очистить корзину"}
-              </button>
-            </aside>
-          </div>
-        )}
+            <button
+              onClick={() => {
+                clearCart();
+                refresh();
+              }}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-500 px-5 py-4 text-base font-black text-red-500"
+            >
+              <Trash2 size={18} />
+              {lang === "uz" ? "Savatni tozalash" : "Очистить корзину"}
+            </button>
+          </aside>
+        </div>
       </section>
     </main>
   );

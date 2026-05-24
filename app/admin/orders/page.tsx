@@ -4,18 +4,23 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
-  ClipboardList,
+  Box,
+  Calendar,
+  CreditCard,
   MapPin,
-  Package,
+  MessageSquare,
   Phone,
-  RefreshCcw,
   Trash2,
+  Truck,
+  User,
 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
 import AdminGuard from "@/components/AdminGuard";
 import { useApp } from "@/context/AppContext";
+
 import { formatPrice } from "@/lib/products";
+
 import {
   deleteSupabaseOrder,
   getSupabaseOrders,
@@ -26,26 +31,36 @@ type DbOrder = {
   id: string;
   customer_name: string;
   customer_phone: string;
+  city?: string;
+  address?: string;
+  payment?: string;
+  delivery?: string;
+  comment?: string;
+  total: number;
+  status: string;
+  created_at: string;
+
   items: {
     slug: string;
     name: string;
     price: number;
     qty: number;
   }[];
-  total: number;
-  status: string;
-  created_at: string;
 };
 
 export default function AdminOrdersPage() {
   const { lang, dark } = useApp();
+
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadOrders() {
     setLoading(true);
+
     const data = await getSupabaseOrders();
-    setOrders(data as DbOrder[]);
+
+    setOrders((data || []) as DbOrder[]);
+
     setLoading(false);
   }
 
@@ -60,37 +75,60 @@ export default function AdminOrdersPage() {
 
   async function removeOrder(id: string) {
     const ok = confirm(
-      lang === "uz" ? "Buyurtmani o‘chirasizmi?" : "Удалить заказ?"
+      lang === "uz"
+        ? "Buyurtmani o‘chirasizmi?"
+        : "Удалить заказ?"
     );
 
     if (!ok) return;
 
     await deleteSupabaseOrder(id);
+
     await loadOrders();
   }
 
+  function statusLabel(status: string) {
+    if (status === "yangi") {
+      return lang === "uz" ? "Yangi" : "Новый";
+    }
+
+    if (status === "jarayonda") {
+      return lang === "uz"
+        ? "Jarayonda"
+        : "В работе";
+    }
+
+    if (status === "yetkazildi") {
+      return lang === "uz"
+        ? "Yetkazildi"
+        : "Доставлен";
+    }
+
+    if (status === "bekor") {
+      return lang === "uz"
+        ? "Bekor qilingan"
+        : "Отменён";
+    }
+
+    return status;
+  }
+
   const theme = {
-    page: dark ? "bg-[#050505] text-white" : "bg-[#f6f7fb] text-zinc-950",
-    card: dark ? "border-white/10 bg-white/[0.04]" : "border-black/10 bg-white",
-    input:
-      dark
-        ? "border-white/10 bg-white/5 text-white"
-        : "border-black/10 bg-white text-zinc-950",
-    soft: dark ? "text-zinc-400" : "text-zinc-600",
-  };
+    page: dark
+      ? "bg-[#050505] text-white"
+      : "bg-[#f6f7fb] text-zinc-950",
 
-  const statusLabels: Record<string, string> = {
-    yangi: lang === "uz" ? "Yangi" : "Новый",
-    jarayonda: lang === "uz" ? "Jarayonda" : "В работе",
-    yetkazildi: lang === "uz" ? "Yetkazildi" : "Доставлен",
-    bekor: lang === "uz" ? "Bekor qilindi" : "Отменён",
-  };
+    card: dark
+      ? "border-white/10 bg-white/[0.04]"
+      : "border-black/10 bg-white",
 
-  const statusClass: Record<string, string> = {
-    yangi: "bg-orange-500/10 text-orange-500",
-    jarayonda: "bg-blue-500/10 text-blue-500",
-    yetkazildi: "bg-green-500/10 text-green-500",
-    bekor: "bg-red-500/10 text-red-500",
+    input: dark
+      ? "border-white/10 bg-white/5 text-white"
+      : "border-black/10 bg-white text-zinc-950",
+
+    soft: dark
+      ? "text-zinc-400"
+      : "text-zinc-600",
   };
 
   return (
@@ -98,54 +136,57 @@ export default function AdminOrdersPage() {
       <main className={`min-h-screen ${theme.page}`}>
         <Navbar />
 
-        <section className="mx-auto max-w-[1440px] px-5 py-8">
+        <section className="mx-auto max-w-[1440px] px-5 py-7">
           <Link
             href="/admin"
-            className="mb-6 inline-flex items-center gap-2 font-bold text-orange-500"
+            className="mb-5 inline-flex items-center gap-2 font-black text-orange-500"
           >
             <ArrowLeft size={18} />
-            {lang === "uz" ? "Admin panelga qaytish" : "Назад в админ панель"}
+
+            {lang === "uz"
+              ? "Admin panelga qaytish"
+              : "Назад"}
           </Link>
 
-          <div className={`rounded-[36px] border p-6 md:p-8 ${theme.card}`}>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="text-orange-500" size={34} />
-                  <h1 className="text-4xl font-black md:text-6xl">
-                    {lang === "uz" ? "Buyurtmalar" : "Заказы"}
-                  </h1>
-                </div>
+          <div
+            className={`rounded-[30px] border p-6 ${theme.card}`}
+          >
+            <h1 className="text-4xl font-black md:text-6xl">
+              {lang === "uz"
+                ? "Buyurtmalar"
+                : "Заказы"}
+            </h1>
 
-                <p className={`mt-4 text-lg ${theme.soft}`}>
-                  {lang === "uz"
-                    ? "Supabase orders table’dan real buyurtmalar."
-                    : "Реальные заказы из таблицы Supabase orders."}
-                </p>
-              </div>
-
-              <button
-                onClick={loadOrders}
-                className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-5 py-3 font-black ${theme.input}`}
-              >
-                <RefreshCcw size={18} />
-                {lang === "uz" ? "Yangilash" : "Обновить"}
-              </button>
-            </div>
+            <p
+              className={`mt-3 text-lg font-medium ${theme.soft}`}
+            >
+              {lang === "uz"
+                ? "Klient ma’lumotlari va buyurtmalar."
+                : "Данные клиентов и заказы."}
+            </p>
           </div>
 
           {loading ? (
-            <div className={`mt-6 rounded-[32px] border p-10 text-center ${theme.card}`}>
+            <div
+              className={`mt-6 rounded-[30px] border p-10 text-center ${theme.card}`}
+            >
               <div className="text-2xl font-black text-orange-500">
                 Loading...
               </div>
             </div>
           ) : orders.length === 0 ? (
-            <div className={`mt-6 rounded-[32px] border p-10 text-center ${theme.card}`}>
-              <ClipboardList className="mx-auto text-orange-500" size={48} />
+            <div
+              className={`mt-6 rounded-[30px] border p-10 text-center ${theme.card}`}
+            >
+              <Box
+                className="mx-auto text-orange-500"
+                size={54}
+              />
 
               <h2 className="mt-5 text-2xl font-black">
-                {lang === "uz" ? "Hozircha buyurtma yo‘q" : "Пока заказов нет"}
+                {lang === "uz"
+                  ? "Buyurtmalar yo‘q"
+                  : "Заказов нет"}
               </h2>
             </div>
           ) : (
@@ -156,94 +197,238 @@ export default function AdminOrdersPage() {
                   className={`rounded-[32px] border p-6 ${theme.card}`}
                 >
                   <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-full bg-orange-500/10 px-4 py-2 text-sm font-black text-orange-500">
+                        <div className="rounded-full bg-orange-500/10 px-4 py-2 text-sm font-black text-orange-500">
                           {order.id}
-                        </span>
+                        </div>
 
-                        <span
-                          className={`rounded-full px-4 py-2 text-sm font-black ${
-                            statusClass[order.status] || statusClass.yangi
-                          }`}
+                        <div className="rounded-full bg-orange-500/10 px-4 py-2 text-sm font-black text-orange-500">
+                          {statusLabel(order.status)}
+                        </div>
+
+                        <div
+                          className={`flex items-center gap-2 text-sm font-bold ${theme.soft}`}
                         >
-                          {statusLabels[order.status] || order.status}
-                        </span>
+                          <Calendar size={16} />
 
-                        <span className={`text-sm font-bold ${theme.soft}`}>
-                          {new Date(order.created_at).toLocaleString()}
-                        </span>
+                          {new Date(
+                            order.created_at
+                          ).toLocaleString()}
+                        </div>
                       </div>
 
-                      <h2 className="mt-4 text-2xl font-black">
+                      <h2 className="mt-5 text-3xl font-black">
                         {order.customer_name}
                       </h2>
 
-                      <div className={`mt-3 grid gap-2 text-sm font-bold ${theme.soft}`}>
-                        <div className="flex items-center gap-2">
-                          <Phone size={16} />
-                          {order.customer_phone}
+                      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        <div
+                          className={`rounded-2xl border p-4 ${theme.input}`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 text-sm font-black ${theme.soft}`}
+                          >
+                            <Phone size={17} />
+
+                            {lang === "uz"
+                              ? "Telefon"
+                              : "Телефон"}
+                          </div>
+
+                          <div className="mt-2 font-black">
+                            {order.customer_phone || "—"}
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <MapPin size={16} />
-                          Uzbekistan
+                        <div
+                          className={`rounded-2xl border p-4 ${theme.input}`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 text-sm font-black ${theme.soft}`}
+                          >
+                            <MapPin size={17} />
+
+                            {lang === "uz"
+                              ? "Viloyat"
+                              : "Регион"}
+                          </div>
+
+                          <div className="mt-2 font-black">
+                            {order.city || "—"}
+                          </div>
+                        </div>
+
+                        <div
+                          className={`rounded-2xl border p-4 ${theme.input}`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 text-sm font-black ${theme.soft}`}
+                          >
+                            <Truck size={17} />
+
+                            {lang === "uz"
+                              ? "Manzil"
+                              : "Адрес"}
+                          </div>
+
+                          <div className="mt-2 font-black">
+                            {order.address || "—"}
+                          </div>
+                        </div>
+
+                        <div
+                          className={`rounded-2xl border p-4 ${theme.input}`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 text-sm font-black ${theme.soft}`}
+                          >
+                            <CreditCard size={17} />
+
+                            {lang === "uz"
+                              ? "To‘lov"
+                              : "Оплата"}
+                          </div>
+
+                          <div className="mt-2 font-black">
+                            {order.payment || "—"}
+                          </div>
+                        </div>
+
+                        <div
+                          className={`rounded-2xl border p-4 ${theme.input}`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 text-sm font-black ${theme.soft}`}
+                          >
+                            <Truck size={17} />
+
+                            {lang === "uz"
+                              ? "Yetkazish"
+                              : "Доставка"}
+                          </div>
+
+                          <div className="mt-2 font-black">
+                            {order.delivery || "—"}
+                          </div>
+                        </div>
+
+                        <div
+                          className={`rounded-2xl border p-4 ${theme.input}`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 text-sm font-black ${theme.soft}`}
+                          >
+                            <MessageSquare size={17} />
+
+                            {lang === "uz"
+                              ? "Izoh"
+                              : "Комментарий"}
+                          </div>
+
+                          <div className="mt-2 font-black">
+                            {order.comment || "—"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`mt-5 rounded-[26px] border p-5 ${theme.input}`}
+                      >
+                        <div className="flex items-center gap-2 text-xl font-black">
+                          <Box
+                            size={22}
+                            className="text-orange-500"
+                          />
+
+                          {lang === "uz"
+                            ? "Mahsulotlar"
+                            : "Товары"}
+                        </div>
+
+                        <div className="mt-5 grid gap-3">
+                          {order.items?.map((item) => (
+                            <div
+                              key={item.slug}
+                              className="flex items-center justify-between gap-4 border-b border-white/10 pb-3"
+                            >
+                              <div>
+                                <div className="font-black">
+                                  {item.name} × {item.qty}
+                                </div>
+                              </div>
+
+                              <div className="font-black text-orange-500">
+                                {formatPrice(
+                                  item.price * item.qty
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-5 flex items-center justify-between">
+                          <div className="text-2xl font-black">
+                            {lang === "uz"
+                              ? "Jami"
+                              : "Итого"}
+                          </div>
+
+                          <div className="text-4xl font-black text-orange-500">
+                            {formatPrice(order.total)}
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2 xl:w-[520px]">
+                    <div className="flex w-full flex-col gap-3 xl:w-[320px]">
                       <select
                         value={order.status}
-                        onChange={(e) => changeStatus(order.id, e.target.value)}
-                        className={`rounded-2xl border px-4 py-3 font-black outline-none ${theme.input}`}
+                        onChange={(e) =>
+                          changeStatus(
+                            order.id,
+                            e.target.value
+                          )
+                        }
+                        className={`rounded-2xl border px-5 py-4 text-lg font-black outline-none ${theme.input}`}
                       >
-                        <option value="yangi">{statusLabels.yangi}</option>
-                        <option value="jarayonda">{statusLabels.jarayonda}</option>
-                        <option value="yetkazildi">{statusLabels.yetkazildi}</option>
-                        <option value="bekor">{statusLabels.bekor}</option>
+                        <option value="yangi">
+                          {lang === "uz"
+                            ? "Yangi"
+                            : "Новый"}
+                        </option>
+
+                        <option value="jarayonda">
+                          {lang === "uz"
+                            ? "Jarayonda"
+                            : "В работе"}
+                        </option>
+
+                        <option value="yetkazildi">
+                          {lang === "uz"
+                            ? "Yetkazildi"
+                            : "Доставлен"}
+                        </option>
+
+                        <option value="bekor">
+                          {lang === "uz"
+                            ? "Bekor qilingan"
+                            : "Отменён"}
+                        </option>
                       </select>
 
                       <button
-                        onClick={() => removeOrder(order.id)}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/20 px-5 py-3 font-black text-red-500 hover:bg-red-500 hover:text-white"
+                        onClick={() =>
+                          removeOrder(order.id)
+                        }
+                        className="flex items-center justify-center gap-3 rounded-2xl border border-red-500 px-5 py-4 text-lg font-black text-red-500"
                       >
-                        <Trash2 size={18} />
-                        {lang === "uz" ? "O‘chirish" : "Удалить"}
+                        <Trash2 size={20} />
+
+                        {lang === "uz"
+                          ? "O‘chirish"
+                          : "Удалить"}
                       </button>
-                    </div>
-                  </div>
-
-                  <div className={`mt-6 rounded-[24px] border p-4 ${theme.input}`}>
-                    <div className="mb-4 flex items-center gap-2 font-black">
-                      <Package size={20} className="text-orange-500" />
-                      {lang === "uz" ? "Mahsulotlar" : "Товары"}
-                    </div>
-
-                    <div className="space-y-3">
-                      {order.items?.map((item) => (
-                        <div
-                          key={`${order.id}-${item.slug}`}
-                          className="flex justify-between gap-4 text-sm font-bold"
-                        >
-                          <span>
-                            {item.name} x{item.qty}
-                          </span>
-
-                          <span className="text-orange-500">
-                            {formatPrice(item.price * item.qty)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="my-4 h-px bg-orange-500/20" />
-
-                    <div className="flex justify-between gap-4 text-xl font-black">
-                      <span>{lang === "uz" ? "Jami" : "Итого"}</span>
-                      <span className="text-orange-500">
-                        {formatPrice(order.total)}
-                      </span>
                     </div>
                   </div>
                 </div>

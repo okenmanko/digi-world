@@ -5,30 +5,25 @@ function generateCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-export async function POST() {
-  try {
-    const code = generateCode();
+async function createCode() {
+  const code = generateCode();
 
-    const { error } = await supabase.from("telegram_login_codes").insert({
-      code,
-      status: "pending",
-    });
+  const { error } = await supabase.from("telegram_login_codes").insert({
+    code,
+    status: "pending",
+  });
 
-    if (error) {
-      return NextResponse.json(
-        { success: false, error },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      code,
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Create code error" },
-      { status: 500 }
-    );
+  if (error) {
+    return NextResponse.json({ success: false, error }, { status: 500 });
   }
+
+  return NextResponse.json({ success: true, code });
+}
+
+export async function GET() {
+  return createCode();
+}
+
+export async function POST() {
+  return createCode();
 }

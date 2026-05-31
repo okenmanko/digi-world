@@ -11,8 +11,7 @@ import {
 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/footer";
-
+import Footer from "@/components/Footer";
 import { useApp } from "@/context/AppContext";
 
 import { clearCart, getCart } from "@/lib/cart";
@@ -57,7 +56,7 @@ export default function CheckoutPage() {
 
       return {
         ...product,
-        qty: item.qty,
+        quantity: item.quantity,
       };
     })
     .filter(Boolean);
@@ -65,7 +64,7 @@ export default function CheckoutPage() {
   const total = items.reduce(
     (sum, item) =>
       item
-        ? sum + item.price * item.qty
+        ? sum + item.price * item.quantity
         : sum,
     0
   );
@@ -76,12 +75,12 @@ export default function CheckoutPage() {
 
       const oldPrice =
         item.oldPrice &&
-        item.oldPrice > item.price
+          item.oldPrice > item.price
           ? item.oldPrice
           : item.price;
 
       return (
-        sum + oldPrice * item.qty
+        sum + oldPrice * item.quantity
       );
     },
     0
@@ -311,12 +310,11 @@ export default function CheckoutPage() {
                       "courier"
                     )
                   }
-                  className={`rounded-2xl px-4 py-3 text-left font-black ${
-                    delivery ===
+                  className={`rounded-2xl px-4 py-3 text-left font-black ${delivery ===
                     "courier"
-                      ? "bg-orange-500 text-white"
-                      : theme.input
-                  }`}
+                    ? "bg-orange-500 text-white"
+                    : theme.input
+                    }`}
                 >
                   {lang === "uz"
                     ? "Kuryer orqali"
@@ -330,12 +328,11 @@ export default function CheckoutPage() {
                       "pickup"
                     )
                   }
-                  className={`rounded-2xl px-4 py-3 text-left font-black ${
-                    delivery ===
+                  className={`rounded-2xl px-4 py-3 text-left font-black ${delivery ===
                     "pickup"
-                      ? "bg-orange-500 text-white"
-                      : theme.input
-                  }`}
+                    ? "bg-orange-500 text-white"
+                    : theme.input
+                    }`}
                 >
                   {lang === "uz"
                     ? "Olib ketish"
@@ -365,12 +362,11 @@ export default function CheckoutPage() {
                       "cash"
                     )
                   }
-                  className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-center font-black transition ${
-                    payment ===
+                  className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-center font-black transition ${payment ===
                     "cash"
-                      ? "bg-orange-500 text-white"
-                      : theme.input
-                  }`}
+                    ? "bg-orange-500 text-white"
+                    : theme.input
+                    }`}
                 >
                   <Banknote size={20} />
                   Naqd
@@ -383,12 +379,11 @@ export default function CheckoutPage() {
                       "click"
                     )
                   }
-                  className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-center font-black transition ${
-                    payment ===
+                  className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-center font-black transition ${payment ===
                     "click"
-                      ? "bg-orange-500 text-white"
-                      : theme.input
-                  }`}
+                    ? "bg-orange-500 text-white"
+                    : theme.input
+                    }`}
                 >
                   Click
                 </button>
@@ -400,12 +395,11 @@ export default function CheckoutPage() {
                       "payme"
                     )
                   }
-                  className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-center font-black transition ${
-                    payment ===
+                  className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-center font-black transition ${payment ===
                     "payme"
-                      ? "bg-orange-500 text-white"
-                      : theme.input
-                  }`}
+                    ? "bg-orange-500 text-white"
+                    : theme.input
+                    }`}
                 >
                   Payme
                 </button>
@@ -438,25 +432,25 @@ export default function CheckoutPage() {
                         <div
                           className={`mt-1 text-sm ${theme.soft}`}
                         >
-                          x{item.qty}
+                          x{item.quantity}
                         </div>
                       </div>
 
                       <div className="text-base font-black text-orange-500">
                         {formatPrice(
                           item.price *
-                            item.qty
+                          item.quantity
                         )}
                       </div>
                     </div>
 
                     {item.oldPrice &&
                       item.oldPrice >
-                        item.price && (
+                      item.price && (
                         <div className="mt-2 text-sm font-bold text-zinc-400 line-through">
                           {formatPrice(
                             item.oldPrice *
-                              item.qty
+                            item.quantity
                           )}
                         </div>
                       )}
@@ -509,7 +503,7 @@ export default function CheckoutPage() {
 
                 <span>
                   {delivery ===
-                  "courier"
+                    "courier"
                     ? "Kuryer"
                     : "Pickup"}
                 </span>
@@ -526,12 +520,12 @@ export default function CheckoutPage() {
 
                 <span>
                   {payment ===
-                  "cash"
+                    "cash"
                     ? "Naqd"
                     : payment ===
                       "click"
-                    ? "Click"
-                    : "Payme"}
+                      ? "Click"
+                      : "Payme"}
                 </span>
               </div>
 
@@ -574,7 +568,7 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </section>
-      <footer/>
+      <footer />
     </main>
   );
 }

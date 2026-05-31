@@ -3,8 +3,7 @@ import { ArrowRight, BadgeCheck, Clock, ShieldCheck, Truck } from "lucide-react"
 
 import Navbar from "@/components/Navbar";
 import MobileBottomNav from "@/components/MobileBottomNav";
-import Footer from "@/components/footer";
-
+import Footer from "@/components/Footer";
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-zinc-950">

@@ -1,6 +1,6 @@
 export type CartItem = {
   slug: string;
-  qty: number;
+  quantity: number;
 };
 
 const CART_KEY = "digi_world_cart";
@@ -8,11 +8,16 @@ const CART_KEY = "digi_world_cart";
 export function getCart(): CartItem[] {
   if (typeof window === "undefined") return [];
 
-  const data = localStorage.getItem(CART_KEY);
-  return data ? JSON.parse(data) : [];
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function saveCart(cart: CartItem[]) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
@@ -21,24 +26,12 @@ export function addToCart(slug: string) {
   const existing = cart.find((item) => item.slug === slug);
 
   if (existing) {
-    existing.qty += 1;
+    existing.quantity += 1;
   } else {
-    cart.push({ slug, qty: 1 });
+    cart.push({ slug, quantity: 1 });
   }
 
   saveCart(cart);
-}
-
-export function decreaseCartItem(slug: string) {
-  const cart = getCart();
-  const existing = cart.find((item) => item.slug === slug);
-
-  if (!existing) return;
-
-  existing.qty -= 1;
-
-  const updated = cart.filter((item) => item.qty > 0);
-  saveCart(updated);
 }
 
 export function removeFromCart(slug: string) {
@@ -46,6 +39,24 @@ export function removeFromCart(slug: string) {
   saveCart(cart);
 }
 
+export function updateQuantity(slug: string, quantity: number) {
+  if (quantity <= 0) {
+    removeFromCart(slug);
+    return;
+  }
+
+  const cart = getCart().map((item) =>
+    item.slug === slug ? { ...item, quantity } : item
+  );
+
+  saveCart(cart);
+}
+
+export function updateCartQuantity(slug: string, quantity: number) {
+  updateQuantity(slug, quantity);
+}
+
 export function clearCart() {
+  if (typeof window === "undefined") return;
   localStorage.removeItem(CART_KEY);
 }
